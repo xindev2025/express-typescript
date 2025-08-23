@@ -1,0 +1,16 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "🔍 Running pre-commit checks..."
+
+npx lint-staged
+
+status=$?
+if [ $status -ne 0 ]; then
+  echo "❌ Pre-commit checks failed. Commit aborted."
+  exit 1
+fi
+
+echo "✅ Pre-commit checks passed!"
+
+npm test
