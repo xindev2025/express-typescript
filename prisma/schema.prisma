@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+  prefer_not_to_say
+}
+
+enum Role {
+  user
+  admin
+}
+
+enum PaymentMethod {
+  cash_on_delivery
+}
+
+model User {
+  id            String        @id @default(uuid()) @db.Uuid
+  firstName     String
+  lastName      String
+  dateOfBirth   DateTime
+  email         String        @unique(map: "user_email_idx")
+  password      String?
+  role          Role          @default(user)
+  emailVerified Boolean       @default(false)
+  isActive      Boolean       @default(true)
+  avatar        String?
+  paymentMethod PaymentMethod @default(cash_on_delivery)
+  gender        Gender?
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  Address Address[]
+
+  @@index([role, isActive])
+}
+
+model Address {
+  userId         String  @db.Uuid
+  fullName       String
+  phoneNumber    String  @unique
+  region         String
+  province       String
+  city           String
+  barangay       String
+  postalCode     String
+  landmark       String
+  defaultAddress Boolean
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([fullName, userId])
+  @@index([userId])
+  @@index([userId, defaultAddress])
+}

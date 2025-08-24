@@ -2,7 +2,7 @@ import app from './app';
 
 const startServer = async () => {
   app.listen(3000, () => {
-    console.log(`Server is runnint on port: ${3000}`);
+    console.log(`Server is running on port: ${3000}`);
   });
 
   // Graceful shutdown here
@@ -12,3 +12,11 @@ const startServer = async () => {
 };
 
 startServer();
+
+/**
+ * TODO
+ * add docker
+ * add routes
+ * add middlewares
+ * add authentication and authorization
+ */
