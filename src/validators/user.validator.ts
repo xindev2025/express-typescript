@@ -51,4 +51,6 @@ export const SignUpSchema = z
         });
       }
     }
-  });
+  })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .transform(({ confirmPassword, ...rest }) => rest);
