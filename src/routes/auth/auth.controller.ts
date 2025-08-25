@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AuthService } from './auth.service';
-import { SignInSchema, SignUpSchema } from '@/validators/auth.validator';
+import { RefreshTokenSignInSchema, SignInSchema, SignUpSchema } from '@/validators/auth.validator';
 
 export const AuthController = {
   async signUp(req: Request, res: Response, next: NextFunction) {
@@ -27,6 +27,32 @@ export const AuthController = {
 
       res.status(200).json({
         message: 'Successfully get sign in user',
+        success: true,
+        data: result,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async refreshTokenSignIn(req: Request, res: Response, next: NextFunction) {
+    const { refreshToken } = RefreshTokenSignInSchema.parse(req.body);
+    if (!refreshToken) {
+      throw new Error('refresh token is required');
+    }
+
+    try {
+      // get stored token in db
+      const storedToken = await AuthService.getRefreshToken(refreshToken);
+
+      if (!storedToken || storedToken.revoked || storedToken.expiresAt < new Date()) {
+        throw new Error('invalid or expired refresh token');
+      }
+
+      const result = await AuthService.generateNewTokens(storedToken.token);
+
+      res.status(200).json({
+        message: 'Successfully get new token',
         success: true,
         data: result,
       });

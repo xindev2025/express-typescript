@@ -46,9 +46,11 @@ model User {
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt
 
-  Address Address[]
+  Address      Address[]
+  RefreshToken RefreshToken[]
 
   @@index([role, isActive])
+  @@index([email, isActive])
 }
 
 model Address {
@@ -71,4 +73,21 @@ model Address {
   @@id([fullName, userId])
   @@index([userId])
   @@index([userId, defaultAddress])
+}
+
+model RefreshToken {
+  id     String @id @default(uuid()) @db.Uuid
+  token  String @unique
+  userId String @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  expiresAt DateTime
+
+  revoked    Boolean @default(false)
+  replacedBy String?
+
+  @@index([token])
+  @@index([userId, token])
 }

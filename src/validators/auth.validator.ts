@@ -59,3 +59,7 @@ export const SignInSchema = z.object({
   email: z.email('invalid email address').trim().toLowerCase(),
   password: z.string().min(8, 'password must be at least 8 characters'),
 });
+
+export const RefreshTokenSignInSchema = z.object({
+  refreshToken: z.string().min(1, 'refresh token is required'),
+});

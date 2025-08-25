@@ -1,8 +1,57 @@
 import { env } from '@/config/env';
+import { sevenDays } from '@/constants';
 import { prisma } from '@/db/prisma';
 import { SignIn, SignUp } from '@/types';
 import argon2 from 'argon2';
 import jwt from 'jsonwebtoken';
+
+const generateTokens = ({
+  id,
+  firstName,
+  lastName,
+  email,
+  role,
+}: {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}) => {
+  // create access token
+  const accessToken = jwt.sign(
+    {
+      id: id,
+      name: `${firstName} ${lastName}`,
+      email: email,
+      role: role,
+    },
+    env.JWT_SECRET,
+    {
+      expiresIn: '1h',
+      algorithm: 'HS256',
+      issuer: 'ecom',
+    }
+  );
+
+  // create refresh token
+  const refreshToken = jwt.sign(
+    {
+      id: id,
+      name: `${firstName} ${lastName}`,
+      email: email,
+      role: role,
+    },
+    env.JWT_REFRESH_SECRET,
+    {
+      expiresIn: '7d',
+      algorithm: 'HS256',
+      issuer: 'ecom',
+    }
+  );
+
+  return { accessToken, refreshToken };
+};
 
 export const AuthService = {
   async signUp(signUpData: SignUp) {
@@ -37,24 +86,20 @@ export const AuthService = {
       throw new Error('Invalid Credentials');
     }
 
-    // create JWT token
-    const token = jwt.sign(
-      {
-        id: user.id,
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        role: user.role,
+    const { accessToken, refreshToken } = generateTokens({ ...user });
+
+    // create refresh token
+    await prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + sevenDays), // 7days
       },
-      env.JWT_SECRET,
-      {
-        expiresIn: '1h',
-        algorithm: 'HS256',
-        issuer: 'ecom',
-      }
-    );
+    });
 
     return {
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -62,6 +107,52 @@ export const AuthService = {
         lastName: user.lastName,
         role: user.role,
       },
+    };
+  },
+  async getRefreshToken(token: string) {
+    const refreshToken = await prisma.refreshToken.findUnique({
+      where: { token },
+    });
+
+    return refreshToken;
+  },
+  async generateNewTokens(refreshToken: string) {
+    // decode refresh token
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+    };
+
+    // generate new token
+    const { accessToken, refreshToken: newRefreshToken } = generateTokens({ ...decoded });
+
+    // revoke old and store new refresh token
+    await prisma.$transaction([
+      // update refresh token, to be deleted in background worker/cron job
+      prisma.refreshToken.update({
+        where: { token: refreshToken },
+        data: {
+          revoked: true,
+          replacedBy: newRefreshToken,
+        },
+      }),
+
+      // create new refresh token
+      prisma.refreshToken.create({
+        data: {
+          token: newRefreshToken,
+          userId: decoded.id,
+          expiresAt: new Date(Date.now() + sevenDays), // 7days
+        },
+      }),
+    ]);
+
+    return {
+      accessToken,
+      newRefreshToken,
     };
   },
 };
