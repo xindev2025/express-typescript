@@ -1,4 +1,5 @@
 import { prisma } from '@/db/prisma';
+import { User } from '@/types';
 
 export const UserService = {
   async getUser(userId: string) {
@@ -7,8 +8,6 @@ export const UserService = {
         id: userId,
       },
       select: {
-        password: false,
-        RefreshToken: false,
         id: true,
         firstName: true,
         lastName: true,
@@ -21,6 +20,25 @@ export const UserService = {
         gender: true,
         paymentMethod: true,
         Address: true,
+      },
+    });
+
+    return user;
+  },
+  async updateUser({ userData, userId }: { userData: User; userId: string }) {
+    const user = await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: userData,
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        dateOfBirth: true,
+        avatar: true,
+        gender: true,
+        paymentMethod: true,
       },
     });
 
