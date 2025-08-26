@@ -22,7 +22,7 @@ export const AuthController = {
   async signIn(req: Request, res: Response, next: NextFunction) {
     try {
       const parseData = SignInSchema.parse(req.body);
-
+      console.log(parseData);
       const result = await AuthService.signIn(parseData);
 
       res.status(200).json({
@@ -31,6 +31,7 @@ export const AuthController = {
         data: result,
       });
     } catch (error) {
+      console.log(error);
       next(error);
     }
   },

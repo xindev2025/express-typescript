@@ -16,7 +16,6 @@ startServer();
 /**
  * TODO
  * add docker
- * add routes
  * add middlewares
- * add authentication and authorization
+ * add authorization
  */
