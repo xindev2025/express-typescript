@@ -63,3 +63,27 @@ export const SignInSchema = z.object({
 export const RefreshTokenSignInSchema = z.object({
   refreshToken: z.string().min(1, 'refresh token is required'),
 });
+
+export const ChangePasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'password must be at least 8 characters long')
+      .max(32, 'password must be at most 32 characters long')
+      .regex(/[A-Z]/, 'password must contain at least one uppercase letter')
+      .regex(/\d/, 'password must contain at least one number')
+      .regex(/[^A-Za-z0-9]/, 'password must contain at least  one special character'),
+    confirmPassword: z.string(),
+  })
+  .superRefine(({ password, confirmPassword }, ctx) => {
+    // password dont match
+    if (password !== confirmPassword) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'password do not match',
+        path: ['confirmPassword'],
+      });
+    }
+  })
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  .transform(({ confirmPassword, password }) => password);

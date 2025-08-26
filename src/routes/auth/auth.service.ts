@@ -155,4 +155,25 @@ export const AuthService = {
       newRefreshToken,
     };
   },
+  async changePassword({ password, userId }: { password: string; userId: string }) {
+    // hash password
+    const hashedPassword = await argon2.hash(password, {
+      type: argon2.argon2id, // best type,
+      memoryCost: 2 ** 16, // 64 MB
+      timeCost: 3, // Iterations
+      parallelism: 1, // Threads
+    });
+
+    return prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        password: hashedPassword,
+      },
+      select: {
+        id: true,
+      },
+    });
+  },
 };
