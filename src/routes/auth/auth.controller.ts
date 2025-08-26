@@ -41,10 +41,7 @@ export const AuthController = {
   },
 
   async refreshTokenSignIn(req: Request, res: Response, next: NextFunction) {
-    const { refreshToken } = RefreshTokenSignInSchema.parse(req.body);
-    if (!refreshToken) {
-      throw new Error('refresh token is required');
-    }
+    const { refreshToken } = RefreshTokenSignInSchema.parse(req.query);
 
     try {
       // get stored token in db
@@ -77,6 +74,22 @@ export const AuthController = {
         message: 'Successfully update user password',
         success: true,
         data: user,
+      });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async signOut(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { refreshToken } = RefreshTokenSignInSchema.parse(req.query);
+
+      await AuthService.signOut(refreshToken);
+
+      res.status(200).json({
+        message: 'Successfully logout user',
+        success: true,
+        data: [],
       });
     } catch (error) {
       next(error);

@@ -5,6 +5,12 @@ const app = express();
 
 app.use(express.json());
 
+/**
+ * middleware
+ * cors
+ * helmet
+ */
+
 // application routes
 routes(app);
 

@@ -135,7 +135,7 @@ export const AuthService = {
       prisma.refreshToken.update({
         where: { token: refreshToken },
         data: {
-          revoked: true,
+          revoked: false,
           replacedBy: newRefreshToken,
         },
       }),
@@ -173,6 +173,27 @@ export const AuthService = {
       },
       select: {
         id: true,
+      },
+    });
+  },
+  async signOut(refreshToken: string) {
+    // decode refresh token
+    const decoded = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      role: string;
+    };
+
+    await prisma.refreshToken.updateMany({
+      where: {
+        userId: decoded.id,
+        revoked: false,
+        token: refreshToken,
+      },
+      data: {
+        revoked: true,
       },
     });
   },
