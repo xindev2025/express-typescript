@@ -5,7 +5,7 @@ export default [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    ignores: ['dist/**'], // Ignore compiled output
+    ignores: ['dist/**', 'tests/**', 'jest.config.ts'], // Ignore compiled output, jest and test folder
   },
   {
     files: ['**/*.ts'],
